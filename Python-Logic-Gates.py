@@ -8,9 +8,7 @@ class LogicGate:
         return self.label
 
     def getOutput(self):
-            print("Perfoming Gate logic on gate " + self.label)
             self.output = self.performGateLogic()
-            print("Output of " + self.label + " is " + str(self.output))
             return self.output
     
 class BinaryGate(LogicGate):
@@ -197,40 +195,54 @@ class NxorGate(BinaryGate):
 class JKFlipFlop(BinaryGate):
     def __init__(self,n):
         super(JKFlipFlop, self).__init__(n)
-        self.started = False
-        self.q = 0
+        self.q = 0 #Current state of flip flop
+        self.qn = 0 #Next state on a new clock tick
+        self.visited = False #If the flip flop has already been visited
     
     def performGateLogic(self):
-            if not self.started:
-                self.started = True
-                return self.q
-            else:
-                 reset = input("You are using the state " + str(self.q) + " for " + self.getLabel() + ", do you want to change this? (Y/N)")
-                 if reset.upper() != "Y":
-                     return self.q
-            
-            print("The current state of q for " + str(self.getLabel()) + " is: " + str(self.q))
-            j = self.getPinA()
-            k = self.getPinB()
-
-            if self.q == 0:
-                if j == 1:
-                    self.q = 1
-            else:
-                if k == 1:
-                    self.q = 0
+        if self.visited: 
             return self.q
-    
+        #If the flip flop has already been visited, then it will just return its current state
+        self.visited = True
+
+        j = self.getPinA()
+        #Main problem here has been solved
+        #The function will dig deep to get j's value
+        #At some point it asks for its own output, but visited now = True
+        #So the code will return its current state
+        #Then the code will eventually return back here and continue to evalutate the value of qn
+        k = self.getPinB()
+        
+        if self.q == 0:
+            if j == 1:
+                self.qn = 1
+        else:
+            if k == 1:
+                self.qn = 0
+        #The logic of the gate to evaluate
+        return self.q
+        #Returns the current state
+
 def main():           
-    
     while True:
         button_press = int(input("Button Pressed? "))
+        #Each loop imitates a clock tick
         s1.pin = None
+        #Resets the button input
         if button_press == 1:
             b_pressed = Connector(bpY,s1)
+            #Connects switch to power
         else:
             b_not_pressed = Connector(bpN, s1)
+            #Connets switch to ground
+        jk1.q = jk1.qn
+        jk2.q = jk2.qn
+        #Updates both the flip flop before the circuit is ran for this clock tick
+        jk1.visited = False
+        jk2.visited = False
+        #Resets the visited value for both flip flops
         print(final.getOutput())
+        #Runs the circuit for this tick
 
 bpY = Power("Button Press")
 bpN = Ground("No button Press")
@@ -243,6 +255,7 @@ g4 = NotGate("jk output")
 final = AndGate("final")
 jk1 = JKFlipFlop("jk1")
 jk2 = JKFlipFlop("jk2")
+
 c1 = Connector(s1,g1)
 c2 = Connector(s1,g2)
 c3 = Connector(s1,g3)
